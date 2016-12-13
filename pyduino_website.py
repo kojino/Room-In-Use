@@ -1,4 +1,4 @@
-from flask import Flask, render_template,request, redirect, url_for
+from flask import Flask, render_template,request, redirect, url_for, jsonify
 from pyduino import *
 import time
 
@@ -11,11 +11,14 @@ a = Arduino()
 time.sleep(3)
 
 # declare the pins we're using
-LED_PIN = 8
-ANALOG_PIN = 0
+MOTION_SENSOR = 2
+GREEN = 4
+RED = 8
 
 # initialize the digital pin as output
-a.set_pin_mode(LED_PIN,'O')
+# a.set_pin_mode(GREEN,'O')
+# a.set_pin_mode(RED, 'O')
+# a.set_pin_mode(MOTION_SENSOR, 'I')
 
 print 'Arduino initialized'
 
@@ -24,52 +27,27 @@ print 'Arduino initialized'
 # POST = some sort of form submission like a button
 @app.route('/', methods = ['POST','GET'])
 def hello_world():
-
-    # variables for template page (templates/index.html)
-    author = "Kyle"
-
-    # if we make a post request on the webpage aka press button then do stuff
-    if request.method == 'POST':
-
-        # if we press the turn on button
-        if request.form['submit'] == 'Turn On':
-            print 'TURN ON'
-
-            # turn on LED on arduino
-            a.digital_write(LED_PIN,1)
-
-        # if we press the turn off button
-        elif request.form['submit'] == 'Turn Off':
-            print 'TURN OFF'
-
-            # turn off LED on arduino
-            a.digital_write(LED_PIN,0)
-
-        # if we press the blink button
-        elif request.form['submit'] == 'Emergency':
-            print 'Emergency'
-
-            # turn on emergency mode
-            a.emergency()
-
-        elif request.form['submit'] == 'Normal':
-            print 'Normal'
-
-            # turn off emergency mode
-            a.normal()
-
-    else:
-        pass
-
+    input_ = a.room_read()
+    if input_ == "empty":
+        return render_template('index.html', is_used = False)
+    elif input_ == "use":
+        return render_template('index.html', is_used = True)
+#
+@app.route('/refresh', methods=['GET'])
+def refresh_data():
     # read in analog value from photoresistor
-    # readval = a.analog_read(ANALOG_PIN)
-    time.sleep(1)
-    # the default page to display will be our template with our template variables
-    return render_template('index.html', author=author, value=0)
+    time.sleep(10)
+    input_ = a.room_read()
+    if input_ == "empty":
+        return jsonify("empty")
+    elif input_ == "use":
+        return jsonify("in use")
+    else:
+        return
 
 if __name__ == "__main__":
 
     # lets launch our webpage!
     # do 0.0.0.0 so that we can log into this webpage
     # using another computer on the same network later
-    app.run(host='0.0.0.0')
+    app.run(host='0.0.0.0',threaded=True)

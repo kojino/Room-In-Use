@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Hopper</title>
+  </head>
+  <body>
+    {% if is_used %}
+      <p id='in-use'>In Use</p>
+    {% else %}
+      <p id='in-use'>Empty</p>
+    {% endif %}
+  </body>
+  <script>
+      var xhr = new XMLHttpRequest();
+      setInterval(function() {
+          xhr.open('GET', '/refresh');
+          xhr.onload = function() {
+              if (xhr.status === 200) {
+                  console.log('Response: ' + xhr.responseText);
+                  var inUse = document.getElementById('in-use');
+                  inUse.innerHTML = xhr.responseText;
+              }
+              else {
+                  console.log('Request failed.  Returned status of ' + xhr.status);
+              }
+          };
+          xhr.send();
+      }, 5000);
+  </script>
+</html>

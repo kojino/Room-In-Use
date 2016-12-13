@@ -58,11 +58,21 @@ class Arduino():
         """
         command = (''.join(('RA', str(pin_number)))).encode()
         self.conn.write(command)
-        # line_received = self.conn.readline().decode().strip()
-        # header, value = line_received.split(':') # e.g. A4:1
-        # if header == ('A'+ str(pin_number)):
+        line_received = self.conn.readline().decode().strip()
+        header, value = line_received.split(':') # e.g. A4:1
+        if header == ('A'+ str(pin_number)):
             # If header matches
-            # return int(value)
+            return int(value)
+
+    def room_read(self):
+        """
+        Performs an analog read on pin_number and returns the value (0 to 1023)
+        Internally sends b'H' over the serial connection
+        """
+        command = (''.join(('HA', str(1)))).encode()
+        self.conn.write(command)
+        line_received = self.conn.readline().decode().strip()
+        return line_received
 
     def analog_write(self, pin_number, analog_value):
         """

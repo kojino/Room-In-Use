@@ -1,4 +1,6 @@
-
+#include <Arduino.h>
+#include <Wire.h>
+#include <SoftwareSerial.h>
 /*****************************************************************************/
 //  Function: If the sensor detects the moving people in it's detecting range,
 //        the Grove - LED is turned on.Otherwise, the LED is turned off.
@@ -12,6 +14,14 @@
 int movingCount = 0;
 int cycleCount = 0;
 bool roomInUse = false;
+int digital_value; // Holds the digital value
+int analog_value; // Holds the analog value
+char operation; // Holds operation (R, W, ...)
+int wait_for_transmission = 5; // Delay in ms in order to receive the serial data
+char mode; // Holds the mode (D, A)
+int value_to_write; // Holds the value that we want to write
+int pin_number; // Holds the pin number
+bool emergencyMode = false;
 
 void setup()
 {
@@ -94,6 +104,7 @@ void analog_write(int pin_number, int analog_value){
 void loop() 
 {
   _delay(1);
+  controlLoop();
   if(isPeopleDetected()) {
     movingCount += 1;
     cycleCount += 1;
@@ -101,21 +112,21 @@ void loop()
     cycleCount += 1;
   }
 
-  Serial.print(cycleCount);
+//  Serial.print(cycleCount);
   if (cycleCount == 10) {
-    Serial.print(String(movingCount) + " out of " + String(cycleCount) + "detected.");
+//    Serial.print(String(movingCount) + " out of " + String(cycleCount) + "detected.");
     if (movingCount >= 5) {
       roomInUse = true;
-      Serial.print("Room In Use");
-      turnOnLED(GREEN);
-      turnOffLED(RED);
+//      Serial.print("Room In Use");
+      turnOnLED(RED);
+      turnOffLED(GREEN);
       movingCount = 0;
       cycleCount = 0;
     } else {
       roomInUse = false;
-      Serial.print("Room Is Empty");
-      turnOffLED(GREEN);
-      turnOnLED(RED);
+//      Serial.print("Room Is Empty");
+      turnOffLED(RED);
+      turnOnLED(GREEN);
       movingCount = 0;
       cycleCount = 0;
     }
@@ -159,6 +170,13 @@ void controlLoop() {
     // Check if characters available in the buffer
     if (Serial.available() > 0) {
         operation = Serial.read();
+        if (operation == 'H'){
+            if (roomInUse) {
+              Serial.print("use");
+            } else {
+              Serial.print("empty");
+            }
+        }
         delay(wait_for_transmission); // If not delayed, second character is not correctly read
         mode = Serial.read();
         pin_number = Serial.parseInt(); // Waits for an int to be transmitted
@@ -195,8 +213,7 @@ void controlLoop() {
                     emergencyMode = true;
                 } else {
                     emergencyMode = false;
-                }
-                
+                }                
 
             default: // Unexpected char
                 break;
